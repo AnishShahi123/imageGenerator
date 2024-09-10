@@ -1,39 +1,34 @@
+import axios from "axios";
 import { useState } from "react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const apiKey = import.meta.env.VITE_REACT_APP_GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey as string);
-
-const FINAL_AI_PROMPT =
-  "You will be provided a prompt to generate an image. The prompt is : {prompt}. Your tasks are: -Generate and image based on the prompt. -Do not generate multiple images. -Do not return anything other than the prompted image.";
-
-const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-pro-exp-0801	",
-});
-
-const generationConfig = {
-  temperature: 1,
-  topP: 0.95,
-  topK: 64,
-  maxOutputTokens: 8192,
-  responseMimeType: "image/png",
-};
 
 function App() {
   const [prompt, setPrompt] = useState("");
-  // const [imageUrl, setImageUrl] = useState("");
+  const [generatedImage, setGeneratedImage] = useState("");
+
+  const getBase64 = (file: Blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
 
   const generateImage = async () => {
     try {
-      const FINAL_PROMPT = FINAL_AI_PROMPT.replace("{prompt}", prompt);
-      const response = await model.generateContent(
-        FINAL_PROMPT,
-        generationConfig
-      );
-      // setImageUrl(imageObjectURL);
-      console.log("Response", response);
-    } catch (e) {
-      console.error(e);
+      if (prompt) {
+        const response = await axios.get(
+          `https://image.pollinations.ai/prompt/${prompt}`,
+          {
+            responseType: "blob",
+          }
+        );
+        const base64 = await getBase64(response.data);
+        setGeneratedImage(base64 as string);
+        setPrompt("");
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -60,11 +55,11 @@ function App() {
                 Generate
               </button>
             </div>
-            {/* {imageUrl && (
-              <div className="w-full py-8">
-                <img src={imageUrl} alt="Generated" className="w-full" />
+            {generatedImage && (
+              <div className="w-full py-8 h-full">
+                <img src={generatedImage} alt="Generated" className="w-full" />
               </div>
-            )} */}
+            )}
           </div>
         </div>
       </div>
