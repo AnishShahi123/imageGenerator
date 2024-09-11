@@ -1,9 +1,12 @@
 import axios from "axios";
 import { useState } from "react";
+import { saveAs } from "file-saver";
+// import { ImDownload3 } from "react-icons/im";
 
 function App() {
   const [prompt, setPrompt] = useState("");
   const [generatedImage, setGeneratedImage] = useState("");
+  const [generatedImageBlob, setGeneratedImageBlob] = useState<Blob>();
 
   const getBase64 = (file: Blob) => {
     return new Promise((resolve, reject) => {
@@ -23,6 +26,7 @@ function App() {
             responseType: "blob",
           }
         );
+        setGeneratedImageBlob(response.data);
         const base64 = await getBase64(response.data);
         setGeneratedImage(base64 as string);
         setPrompt("");
@@ -30,6 +34,10 @@ function App() {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleDownload = async () => {
+    saveAs(generatedImageBlob as Blob, "generated-image.jpeg");
   };
 
   return (
@@ -56,9 +64,22 @@ function App() {
               </button>
             </div>
             {generatedImage && (
-              <div className="w-full py-8 h-full">
-                <img src={generatedImage} alt="Generated" className="w-full" />
-              </div>
+              <>
+                <div className="w-full max-w-md mx-auto h-full border rounded-lg">
+                  <img
+                    src={generatedImage}
+                    alt="Generated"
+                    className="border rounded-lg"
+                  />
+                </div>
+                <button
+                  className="text-white bg-blue-500 p-4 border rounded-md my-5"
+                  onClick={handleDownload}
+                >
+                  Download
+                  {/* <ImDownload3 /> */}
+                </button>
+              </>
             )}
           </div>
         </div>
